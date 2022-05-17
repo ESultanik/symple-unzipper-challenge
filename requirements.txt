@@ -1,3 +1,5 @@
 fastapi~=0.78.0
+patool~=1.12
 python-multipart~=0.0.5
+pyunpack~=0.2.2
 uvicorn~=0.17.6
