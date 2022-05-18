@@ -1,2 +1,5 @@
 uploads
 flag.txt
+.idea
+.git
+__pycache__
