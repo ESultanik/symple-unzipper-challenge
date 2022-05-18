@@ -1,11 +1,14 @@
+import asyncio
+from base64 import b64encode
 import os
-import zipfile
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Dict, Optional, Union
+from zipfile import is_zipfile
 
 from fastapi import FastAPI, HTTPException, UploadFile
-from pyunpack import Archive, PatoolError
+from patoolib import extract_archive
+from patoolib.util import PatoolError
 
 app = FastAPI()
 
@@ -20,21 +23,34 @@ if not FLAG_PATH.exists() and "FLAG" in os.environ:
     FLAG_PATH.write_text(os.environ["FLAG"])
 
 
+async def validate_ar(path: Union[str, Path]):
+    """Validates that an ar archive is valid by running `ar t` on it"""
+    proc = await asyncio.create_subprocess_exec(AR_PROGRAM, "t", str(path),
+                                                stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+    retcode = await proc.wait()
+    if retcode != 0:
+        raise ValueError(f"Invalid ar archive: `ar t {Path(path).name!s}` exited with code {retcode}")
+
+
 @app.get("/")
 async def root():
     return {"flag": os.environ.get("FLAG")}
 
 
-def read_files(directory: Union[str, Path]) -> Dict[str, Union[Optional[bytes], Dict[str, Any]]]:
+def read_files(directory: Union[str, Path]) -> Dict[str, Union[Optional[str], Dict[str, Any]]]:
     if not isinstance(directory, Path):
         directory = Path(directory)
-    contents: Dict[str, Union[Optional[bytes], Dict[str, Any]]] = {}
+    contents: Dict[str, Union[Optional[str], Dict[str, Any]]] = {}
     for path in directory.iterdir():
         if path.is_dir():
             contents[path.name] = read_files(path)
         else:
             try:
-                contents[path.name] = path.read_bytes()
+                content = path.read_bytes()
+                try:
+                    contents[path.name] = content.decode("utf-8")
+                except UnicodeDecodeError:
+                    contents[path.name] = b64encode(content).decode("utf-8")
             except IOError:
                 contents[path.name] = None
     return contents
@@ -50,12 +66,12 @@ async def extract(file: UploadFile):
                 if not data:
                     break
                 f.write(data)
-        # make sure the file is a zip because patool does not extract symlinks from zip (no hacking!)
-        if not zipfile.is_zipfile(file_to_extract):
-            raise HTTPException(status_code=415, detail="The input file must be a zip")
+        # make sure the file is a valid zip because Python's zipfile doesn't support symlinks (no hacking!)
+        if not is_zipfile(file_to_extract):
+            raise HTTPException(status_code=415, detail=f"The input file must be an ZIP archive.")
         with TemporaryDirectory(dir=tmpdir) as extract_to_dir:
             try:
-                Archive(str(file_to_extract)).extractall_patool(extract_to_dir, None)
+                extract_archive(str(file_to_extract), outdir=extract_to_dir)
             except PatoolError as e:
                 raise HTTPException(status_code=400, detail=f"Error extracting ZIP {file_to_extract.name}: {e!s}")
             return read_files(extract_to_dir)

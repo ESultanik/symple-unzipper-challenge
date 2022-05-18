@@ -2,11 +2,9 @@ FROM python:3.10
 
 RUN mkdir /server && mkdir -p /server/static/etc
 
-COPY *.py Dockerfile LICENSE README.md requirements.txt /server/
-COPY static/etc/passwd /server/static/etc/
+COPY . /server/
 
-RUN tar czvf server.tar.gz server && mv server.tar.gz /server/static/
-
+RUN tar czvf server.tar.gz server && mv server.tar.gz /server/
 WORKDIR /server
 
 RUN pip install -r requirements.txt
