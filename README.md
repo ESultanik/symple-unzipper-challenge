@@ -59,7 +59,9 @@ When a new ZIP extraction request is handled, the following steps occur:
    [`zipfile.is_zipfile`](https://docs.python.org/3/library/zipfile.html#zipfile.is_zipfile);
    if not, then an HTTP error 415 is returned
 4. A new temporary directory is created: `/server/uploads/[TEMPDIR]/[SECOND_TEMPDIR]/`
-5. The ZIP is extracted into `[SECOND_TEMPDIR]`
+5. The ZIP is extracted into `[SECOND_TEMPDIR]` using the [patool library's](https://wummel.github.io/patool/)
+   [`extract_archive`](https://github.com/wummel/patool/blob/4928f3fc5083248ec83bbf6b02b5d9089c309100/patoolib/__init__.py#L760-L767)
+   function
 6. The server traverses all the extracted files and serializes their names and contents to a JSON dictionary; any files 
    that cannot be decoded in UTF-8 are Base64 encoded
 
