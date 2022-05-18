@@ -43,6 +43,26 @@ $ python3 server.py
 
 The web server's landing page, [`index.html`](index.html), has more information.
 
+## Code Organization and Behavior
+
+In the Docker container, all the files in this directory is copied to `/server/`. 
+
+All the server code is in a single Python file: [/server/server.py](server.py). When started, it does two things:
+1. If the `FLAG` environment variable is set, _and_ if  `/server/flag.txt` does not exist, then it saves the contents of
+   the `FLAG` environmment variable to `/server/flag.txt`
+2. Creates the directory `/server/uploads/`, if it does not already exist 
+
+When a new ZIP extraction request is handled, the following steps occur:
+1. A new temporary directory is created in `/server/uploads/`
+2. The ZIP is saved to `/server/uploads/[TEMPDIR]/[ZIPFILE]`
+3. The file is confirmed to be a ZIP by running 
+   [`zipfile.is_zipfile`](https://docs.python.org/3/library/zipfile.html#zipfile.is_zipfile);
+   if not, then an HTTP error 415 is returned
+4. A new temporary directory is created: `/server/uploads/[TEMPDIR]/[SECOND_TEMPDIR]/`
+5. The ZIP is extracted into `[SECOND_TEMPDIR]`
+6. The server traverses all the extracted files and serializes their names and contents to a JSON dictionary; any files 
+   that cannot be decoded in UTF-8 are Base64 encoded
+
 ## License and Acknowledgements
 
 This code was created by [Evan Sultanik](https://www.sultanik.com/) and is licensed and distributed under the
