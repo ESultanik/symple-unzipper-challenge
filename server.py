@@ -49,8 +49,11 @@ SOURCE_PATH = ROOT_DIR / "server.tar.gz"
 if not UPLOAD_DIR.exists():
     UPLOAD_DIR.mkdir()
 
-if not FLAG_PATH.exists() and "FLAG" in os.environ:
-    FLAG_PATH.write_text(os.environ["FLAG"])
+if "FLAG" in os.environ:
+    if not FLAG_PATH.exists():
+        FLAG_PATH.write_text(os.environ["FLAG"])
+    # delete the flag from the ENV. No h4x0ring!!!1
+    del os.environ["FLAG"]
 
 
 @app.get("/")
