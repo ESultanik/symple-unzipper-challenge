@@ -23,15 +23,6 @@ if not FLAG_PATH.exists() and "FLAG" in os.environ:
     FLAG_PATH.write_text(os.environ["FLAG"])
 
 
-async def validate_ar(path: Union[str, Path]):
-    """Validates that an ar archive is valid by running `ar t` on it"""
-    proc = await asyncio.create_subprocess_exec(AR_PROGRAM, "t", str(path),
-                                                stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
-    retcode = await proc.wait()
-    if retcode != 0:
-        raise ValueError(f"Invalid ar archive: `ar t {Path(path).name!s}` exited with code {retcode}")
-
-
 @app.get("/")
 async def root():
     return {"flag": os.environ.get("FLAG")}
