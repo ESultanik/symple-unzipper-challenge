@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional, Union
 from zipfile import is_zipfile
 
 from fastapi import FastAPI, HTTPException, UploadFile
+from fastapi.responses import FileResponse
 from patoolib import extract_archive
 from patoolib.util import PatoolError
 
@@ -14,6 +15,7 @@ app = FastAPI()
 ROOT_DIR = Path(__file__).absolute().parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
 FLAG_PATH = ROOT_DIR / "flag.txt"
+SOURCE_PATH = ROOT_DIR / "server.tar.gz"
 
 if not UPLOAD_DIR.exists():
     UPLOAD_DIR.mkdir()
@@ -23,8 +25,14 @@ if not FLAG_PATH.exists() and "FLAG" in os.environ:
 
 
 @app.get("/")
-async def root():
-    return {"flag": os.environ.get("FLAG")}
+async def index():
+    return FileResponse(ROOT_DIR / "index.html")
+
+
+if SOURCE_PATH.exists():
+    @app.get("/server.tar.gz")
+    async def code_download():
+        return FileResponse(SOURCE_PATH)
 
 
 def read_files(directory: Union[str, Path]) -> Dict[str, Union[Optional[str], Dict[str, Any]]]:
