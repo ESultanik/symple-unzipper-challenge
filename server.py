@@ -1,4 +1,3 @@
-import asyncio
 from base64 import b64encode
 import os
 from pathlib import Path
