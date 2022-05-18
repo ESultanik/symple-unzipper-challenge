@@ -10,7 +10,36 @@ from fastapi.responses import FileResponse
 from patoolib import extract_archive
 from patoolib.util import PatoolError
 
-app = FastAPI()
+tags_metadata = [
+    {
+        "name": "extract",
+        "description": "This is the main API endpoint. It accepts a ZIP file upload and returns a JSON object "
+                       "containing the contents of every file extracted from the ZIP. You can upload a ZIP file "
+                       "directly from your web browser by clicking the \"Try it out\" button, below.",
+    },
+    {
+        "name": "sourcecode",
+        "description": "Use this link to download the source code to the server.",
+    },
+]
+
+app = FastAPI(
+    title="Symple Unzipper Challenge",
+    description="""See [the main index page](/) for more information about the challenge.
+    
+### License
+""",
+    version="0.0.1",
+    openapi_tags=tags_metadata,
+    license_info={
+        "name": "AGPLv3",
+        "url": "https://www.gnu.org/licenses/agpl-3.0.en.html",
+    },
+    contact={
+        "name": "Evan Sultanik",
+        "url": "https://www.sultanik.com/",
+    },
+)
 
 ROOT_DIR = Path(__file__).absolute().parent
 UPLOAD_DIR = ROOT_DIR / "uploads"
@@ -32,10 +61,16 @@ async def index():
 if SOURCE_PATH.exists():
     @app.get("/server.tar.gz")
     async def code_download():
+        """Download the source code for this server"""
         return FileResponse(SOURCE_PATH)
 
 
 def read_files(directory: Union[str, Path]) -> Dict[str, Union[Optional[str], Dict[str, Any]]]:
+    """Recursively crawls the given directory saving the contents of every file to a JSON object
+
+    Any files that cannot be represented in UTF-8 are Base64 encoded.
+
+    """
     if not isinstance(directory, Path):
         directory = Path(directory)
     contents: Dict[str, Union[Optional[str], Dict[str, Any]]] = {}
@@ -54,8 +89,9 @@ def read_files(directory: Union[str, Path]) -> Dict[str, Union[Optional[str], Di
     return contents
 
 
-@app.post("/extract")
+@app.post("/extract", tags=["extract"])
 async def extract(file: UploadFile):
+    """Extracts """
     with TemporaryDirectory(dir=UPLOAD_DIR) as tmpdir:
         file_to_extract = Path(tmpdir) / file.filename
         with open(file_to_extract, "wb") as f:
