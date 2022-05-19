@@ -62,7 +62,7 @@ async def index():
 
 
 if SOURCE_PATH.exists():
-    @app.get("/server.tar.gz")
+    @app.get("/server.tar.gz", tags=["sourcecode"])
     async def code_download():
         """Download the source code for this server"""
         return FileResponse(SOURCE_PATH)
@@ -94,7 +94,7 @@ def read_files(directory: Union[str, Path]) -> Dict[str, Union[Optional[str], Di
 
 @app.post("/extract", tags=["extract"])
 async def extract(file: UploadFile):
-    """Extracts """
+    """Extracts the given ZIP and returns a JSON object containing the contents of every file extracted"""
     with TemporaryDirectory(dir=UPLOAD_DIR) as tmpdir:
         file_to_extract = Path(tmpdir) / file.filename
         with open(file_to_extract, "wb") as f:
